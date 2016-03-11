@@ -1,0 +1,36 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+
+<dom-module id="my-view">
+    <style>
+        /*style here */
+    </style>
+
+    <template>
+        <!-- bind to the "owner" property -->
+        This is <b>{{title}}</b>'s element.
+        <div><b>Employee list:</b></div>
+        <template is="dom-repeat" items="{{employees}}">
+            <div># <span>{{index}}</span></div>
+            <div>First name: <span>{{item.first}}</span></div>
+            <div>Last name: <span>{{item.last}}</span></div>
+        </template>
+    </template>
+
+    <script>
+        Polymer({
+            is: "my-view",
+            ready: function () {
+                // set this element's owner property
+                this.title = "data sources";
+
+                this.employees = [
+                    {first: 'Bob', last: 'Smith'},
+                    {first: 'Sally', last: 'Johnson'},
+                    {first: 'Sergio', last: 'Rudenko'}
+
+                ];
+            }
+        });
+    </script>
+
+</dom-module>
