@@ -1,0 +1,70 @@
+<link rel="import" href="../../bower_components/iron-collapse/iron-collapse.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item.html">
+
+<dom-module id="tree-node">
+    <style>
+        /*style here */
+        paper-item {
+            margin: 4px 4px 4px 4px;
+            --paper-item-min-height: 32px;
+        }
+
+        #level0 {
+            padding-left: 16px;
+        }
+
+        #level1 {
+            padding-left: 32px;
+        }
+
+        #level2 {
+            padding-left: 48px;
+        }
+
+        iron-collapse {
+            transition-duration: 100ms;
+        }
+
+    </style>
+
+    <template>
+        <paper-item id="level{{level}}" class="node" on-tap="toggle">{{node.name}} [{{node.nodes.length}}]</paper-item>
+        <iron-collapse id="collapse">
+
+            <template is="dom-repeat" items="{{node.nodes}}">
+                <tree-node node="{{item}}" level="{{nextLevel(level)}}"></tree-node>
+            </template>
+
+        </iron-collapse>
+    </template>
+
+    <script>
+        Polymer({
+            is: "tree-node",
+
+            properties: {
+                node: {
+                    type: Object,
+                    value: {}
+                },
+
+                level: {
+                    type: Number,
+                    value: 0,
+                    notify: true
+                }
+            },
+
+            nextLevel: function (i) {
+                //console.log('nextlevel in=' + i);
+                return +i + 1;
+            },
+
+            toggle: function () {
+                //console.log('collapse node[' + this.node.id + '] toggled.');
+                if (this.node.nodes.length > 0) this.$.collapse.toggle();
+            }
+        });
+    </script>
+
+</dom-module>

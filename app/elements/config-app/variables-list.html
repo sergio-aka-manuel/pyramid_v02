@@ -1,0 +1,88 @@
+<link rel="import" href="../../bower_components/iron-collapse/iron-collapse.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item.html">
+
+<dom-module id="variables-list">
+    <style>
+        /*style here */
+    </style>
+
+    <template>
+        <template is="dom-repeat" items="{{nodes}}">
+            <tree-node node="{{item}}" level="0"></tree-node>
+        </template>
+    </template>
+
+    <script>
+        Polymer({
+            is: "variables-list",
+
+            properties: {
+                nodes: {
+                    type: Array,
+                    value: function () {
+                        return [
+                            {
+                                id: 1,
+                                icon: 'none',
+                                name: 'first',
+                                text: 'first element comment',
+                                nodes: [
+                                    {
+                                        id: 3,
+                                        icon: 'none',
+                                        name: 'third',
+                                        text: 'element comment',
+                                        nodes: []
+                                    }
+                                ]
+                            },
+                            {
+                                id: 2,
+                                icon: 'none',
+                                name: 'second',
+                                text: 'second element comment',
+                                nodes: [
+                                    {
+                                        id: 4,
+                                        icon: 'none',
+                                        name: 'forth',
+                                        text: 'element comment',
+                                        nodes: []
+                                    },
+                                    {
+                                        id: 5,
+                                        icon: 'none',
+                                        name: 'fifth',
+                                        text: 'element comment',
+                                        nodes: [
+                                            {
+                                                id: 6,
+                                                gid: 5,
+                                                icon: 'none',
+                                                name: 'six',
+                                                text: 'element comment',
+                                                nodes: []
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            },
+
+            isGid: function (gid) {
+                return function (item) {
+                    console.log(item.name + ':' + item.gid + ',' + gid);
+                    return item.gid === gid;
+                }
+            },
+
+            ready: function () {
+                // set this element's owner property
+            }
+        });
+    </script>
+
+</dom-module>

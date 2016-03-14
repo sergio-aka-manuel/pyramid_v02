@@ -30,7 +30,11 @@ function lazyLoadPolymerAndElements() {
 
     var elements = [
         //'/path/to/bundle/one.html',
-        '/elements/my-view.html'
+        //'/elements/my-view.html'
+        '/elements/config-app/layout.html',
+        '/elements/config-app/sources-list.html',
+        '/elements/config-app/variables-list.html',
+        '/elements/config-app/tree-node.html'
     ];
 
     elements.forEach(function (elementURL) {

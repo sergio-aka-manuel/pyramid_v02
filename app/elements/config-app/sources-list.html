@@ -1,0 +1,50 @@
+<link rel="import" href="../../bower_components/iron-collapse/iron-collapse.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item.html">
+
+<dom-module id="sources-list">
+    <style>
+        /*style here */
+        paper-item {
+            margin: 4px 4px 4px 4px;
+            --paper-item-min-height: 32px;
+        }
+
+        .level1 {
+            padding-left: 32px;
+        }
+
+        .level2 {
+            padding-left: 48px;
+        }
+
+    </style>
+
+    <template>
+        <paper-item on-click="toggle">Data sources</paper-item>
+
+        <iron-collapse id="collapse">
+            <div>
+                <paper-item class="level1">Item 1</paper-item>
+                <paper-item class="level1">Item 2</paper-item>
+                <paper-item class="level1">Item 3</paper-item>
+                <paper-item class="level1">Item 4</paper-item>
+                <paper-item class="level1">Item 5</paper-item>
+            </div>
+        </iron-collapse>
+    </template>
+
+    <script>
+        Polymer({
+            is: "sources-list",
+            ready: function () {
+                // set this element's owner property
+            },
+
+            toggle: function () {
+                this.$.collapse.toggle();
+            }
+
+        });
+    </script>
+
+</dom-module>
