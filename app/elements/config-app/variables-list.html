@@ -8,7 +8,9 @@
 
     <template>
         <template is="dom-repeat" items="{{nodes}}">
-            <tree-node node="{{item}}" level="0"></tree-node>
+            <template is="dom-if" if="{{isGroup(item)}}">
+                <tree-node node="{{item}}" level="0"></tree-node>
+            </template>
         </template>
     </template>
 
@@ -19,64 +21,13 @@
             properties: {
                 nodes: {
                     type: Array,
-                    value: function () {
-                        return [
-                            {
-                                id: 1,
-                                icon: 'none',
-                                name: 'first',
-                                text: 'first element comment',
-                                nodes: [
-                                    {
-                                        id: 3,
-                                        icon: 'none',
-                                        name: 'third',
-                                        text: 'element comment',
-                                        nodes: []
-                                    }
-                                ]
-                            },
-                            {
-                                id: 2,
-                                icon: 'none',
-                                name: 'second',
-                                text: 'second element comment',
-                                nodes: [
-                                    {
-                                        id: 4,
-                                        icon: 'none',
-                                        name: 'forth',
-                                        text: 'element comment',
-                                        nodes: []
-                                    },
-                                    {
-                                        id: 5,
-                                        icon: 'none',
-                                        name: 'fifth',
-                                        text: 'element comment',
-                                        nodes: [
-                                            {
-                                                id: 6,
-                                                gid: 5,
-                                                icon: 'none',
-                                                name: 'six',
-                                                text: 'element comment',
-                                                nodes: []
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        ]
-                    }
+                    value: {}
                 }
             },
 
-            isGid: function (gid) {
-                return function (item) {
-                    console.log(item.name + ':' + item.gid + ',' + gid);
-                    return item.gid === gid;
-                }
+            isGroup: function (node) {
+                //console.log('name: "%s", type: %s', node.data.name, node.type);
+                return node.type === _OPC_GROUP;
             },
 
             ready: function () {

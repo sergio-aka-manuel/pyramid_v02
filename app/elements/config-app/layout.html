@@ -5,6 +5,7 @@
 <link rel="import" href="../../bower_components/paper-toolbar/paper-toolbar.html">
 <link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
 
 <dom-module id="config-app-layout">
     <style>
@@ -24,13 +25,17 @@
     </style>
 
     <template>
+        <iron-ajax id="config" auto
+                   url="/subscription">
+        </iron-ajax>
+
         <paper-drawer-panel>
             <paper-header-panel class="drawer-panel" drawer>
                 <paper-toolbar>
                     <div>Application</div>
                 </paper-toolbar>
                 <sources-list></sources-list>
-                <variables-list></variables-list>
+                <variables-list nodes="{{vars}}"></variables-list>
             </paper-header-panel>
             <paper-header-panel class="main-panel" main>
                 <paper-toolbar>
@@ -43,10 +48,54 @@
     </template>
 
     <script>
+        const
+                _OPC_GROUP = 0,
+                _OPC_DATAIO = 1,
+                _OPC_VARIABLE = 2;
+
         Polymer({
             is: "config-app-layout",
+            properties: {
+                vars: {
+                    type: Array,
+                    value: []
+                }
+            },
+
             ready: function () {
                 console.log('layout ready');
+
+                var src = [
+                    {id: 1, type: _OPC_GROUP, data: {name: "Group 1", list: [{id: 3}, {id: 10}, {id: 11}]}},
+                    {id: 2, type: _OPC_GROUP, data: {name: "Group 2", list: [{id: 20}, {id: 21}, {id: 10}]}},
+                    {id: 3, type: _OPC_GROUP, data: {name: "Group 3", list: [{id: 11}, {id: 21}]}},
+                    {id: 10, type: _OPC_VARIABLE, data: {name: "Variable 1", datatype: "Numeric", value: 123}},
+                    {id: 11, type: _OPC_VARIABLE, data: {name: "Variable 2", datatype: "Numeric", value: 456}},
+                    {id: 20, type: _OPC_VARIABLE, data: {name: "Variable 3", datatype: "Numeric", value: 789}},
+                    {id: 21, type: _OPC_VARIABLE, data: {name: "Variable 4", datatype: "Numeric", value: 100}},
+                    {id: 30, type: _OPC_GROUP, data: {name: "Group 4", list: [{id: 10}, {id: 11}, {id: 20}, {id: 21}]}},
+                ];
+
+
+                var list = [];
+                for (var i = 0; i < src.length; i++) {
+                    list[src[i].id] = src[i];
+                }
+
+
+                console.log(list);
+
+                for (var i = 0; i < list.length; i++) {
+                    if (list[i] === undefined) continue;
+                    if (list[i].type === _OPC_GROUP) {
+                        for (var j = 0; j < list[i].data.list.length; j++)
+                            list[i].data.list[j] = list[list[i].data.list[j].id];
+                    }
+                }
+
+                console.log(list);
+
+                this.set('vars', src);
             }
         });
     </script>
