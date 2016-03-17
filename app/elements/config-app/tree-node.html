@@ -28,10 +28,11 @@
     </style>
 
     <template>
-        <paper-item id="level{{level}}" class="node" on-tap="toggle">{{node.name}} [{{node.nodes.length}}]</paper-item>
+        <paper-item id="level{{level}}" class="node" on-tap="toggle">{{getNodeName(node)}}</paper-item>
+
         <iron-collapse id="collapse">
 
-            <template is="dom-repeat" items="{{node.nodes}}">
+            <template is="dom-repeat" items="{{node.data.list}}">
                 <tree-node node="{{item}}" level="{{nextLevel(level)}}"></tree-node>
             </template>
 
@@ -55,14 +56,22 @@
                 }
             },
 
+            getNodeName: function (n) {
+                if (n.type === _OPC_GROUP) return n.data.name;
+                return '-> ' + n.data.name;
+            },
+
             nextLevel: function (i) {
                 //console.log('nextlevel in=' + i);
                 return +i + 1;
             },
 
             toggle: function () {
-                //console.log('collapse node[' + this.node.id + '] toggled.');
-                if (this.node.nodes.length > 0) this.$.collapse.toggle();
+                //console.log('collapse node[' + this.node.id + '] click.');
+                if (this.node.type === _OPC_GROUP) {
+                    this.$.collapse.toggle();
+                    //console.log(this);
+                }
             }
         });
     </script>
