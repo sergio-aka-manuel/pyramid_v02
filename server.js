@@ -1,24 +1,40 @@
 /**
  * Created by manuel on 11.03.16.
  */
+
 'use strict';
 
-var http = require('http');
-var express = require('express');
-var bodyParser = require("body-parser");
+var server = require('http').createServer(),
+    url = require('url'),
+    WebSocketServer = require('ws').Server,
+    wss = new WebSocketServer({server: server}),
+    bodyParser = require("body-parser"),
+    express = require('express'),
+    app = express(),
+    port = 4080;
 
-var app = express();
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(express.static(__dirname + '/app'));
-//app.use('/bower_components', express.static(__dirname + '/app/bower_components'));
-app.set('port', process.env.PORT || 3000);
 
-var server = http.createServer(app).listen(app.get('port'), function () {
-    console.log('Started server on port ' + app.get('port'));
+wss.on('connection', function connection(ws) {
+    var location = url.parse(ws.upgradeReq.url, true);
+    // you might use location.query.access_token to authenticate or share sessions
+    // or ws.upgradeReq.headers.cookie (see http://stackoverflow.com/a/16395220/151312)
+
+    ws.on('message', function incoming(message) {
+        console.log('ws received: %s', message);
+    });
+
+    ws.send('greeting');
+});
+
+server.on('request', app);
+server.listen(process.env.PORT || port || 3000, function () {
+    console.log('Listening on ' + server.address().port);
 });
 
 
-// database
+// database -------------------------------------------------------------------
 var tables = {};
 
 var pg = require('pg');
