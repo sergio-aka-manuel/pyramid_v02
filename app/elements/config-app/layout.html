@@ -5,7 +5,6 @@
 <link rel="import" href="../../bower_components/paper-toolbar/paper-toolbar.html">
 <link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
-<link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
 
 <dom-module id="config-app-layout">
     <style>
@@ -25,10 +24,6 @@
     </style>
 
     <template>
-        <iron-ajax id="config" auto
-                   url="/subscription">
-        </iron-ajax>
-
         <paper-drawer-panel>
             <paper-header-panel class="drawer-panel" drawer>
                 <paper-toolbar>
@@ -83,7 +78,7 @@
                 }
 
 
-                console.log(list);
+                //console.log(list);
 
                 for (var i = 0; i < list.length; i++) {
                     if (list[i] === undefined) continue;
@@ -93,7 +88,7 @@
                     }
                 }
 
-                console.log(list);
+                //console.log(list);
 
                 this.set('vars', src);
             }
