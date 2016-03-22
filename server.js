@@ -108,152 +108,170 @@ function _wsClientLogout(key, message) {
 }
 
 
-
-
-
-
 // database -------------------------------------------------------------------
 var channels = {};
 
 var pg = require('pg');
-var pgConString = 'postgres://manuel:0560044@192.168.5.29/manuel';
+var pgConString = process.env.PGCONSTR || 'postgres://manuel:0560044@192.168.5.29/manuel';
 var pgClient = new pg.Client(pgConString);
 
 // connect to server
-pgClient.connect(function (err) {
-    if (err) {
-        return console.error('could not connect to postgres', err);
-    }
+pgClient.connect(function (error) {
+    if (error) return console.error('could not connect to postgres', error);
+
+    console.log('pg: connected to database.');
 });
+
+
+var incompletePayloads = {}; //FIXME: turn PgLive to module
 
 /**
  * TODO: documentation
  * @param msg
  * @returns {{table: string, op: string, data: {processId: (*|number), text: (string|*)}}}
  */
-function _parsePayload(msg) {
-    //'78801100f4c2dfbb5e6afdb2dde95194:1:1:{"table":"variables","op":"INSERT",
-    // "data":[{"id":2,"type":2,"data":{},"created_at":"2016-03-17T15:38:45.097962+03:00",
-    // "modified_at":"2016-03-17T15:38:45.097962+03:00"}]}'
-    var pld = {};
+function _parseNotification(msg) {
+    //console.log(msg);
+    // msg format: {
+    //       name: 'notification'
+    //       length: CHUNK_LENGTH,
+    //       processId: PID,
+    //       channel: 'CHANNEL_NAME' (for notification(): [update|insert|delete]),
+    //       payload: 'TABLE_NAME#ID#CHUNK#CHUNKS#DATA'
+    // }
+    var note = {
+        processId: msg.processId,
+        channel: msg.channel,
+        data: msg.payload
+    };
 
-    try {
-        pld = JSON.parse(msg.payload.split(':').slice(3).join(':'));
+    if (note.channel == 'update' || note.channel == 'insert' || note.channel == 'delete') {
+        var payload = msg.payload.split('#');
+        var chunks = payload[3];
+        var chunk = payload[2];
 
-    } catch (err) {
-        pld = {
-            table: 'messages',
-            op: 'NOTIFY',
-            data: {
-                processId: msg.processId,
-                text: msg.payload
-            }
-        };
+        note.table = payload[0];
+        note.id = payload[1];
+        note.data = payload.slice(4).join('#');
+
+        if (chunks > 1) {
+            var hash = note.table + '_' + note.id;
+            if (incompletePayloads[hash])
+                incompletePayloads[hash] += note.data;
+            else
+                incompletePayloads[hash] = note.data;
+
+            if (chunk != chunks) return null;
+
+            note.data = incompletePayloads[hash];
+            delete incompletePayloads[hash];
+
+        }
+        _checkTableChannel(note.table);
     }
 
-    _checkTableChannel(pld.table);
-    return pld;
+    try {
+        note.data = JSON.parse(note.data);
+    } catch (error) {
+        console.error('JSON.parse(\'%s\') error:', note.data, error);
+        note.data = msg.payload;
+    }
+
+    return note;
 }
 
-function _checkTableChannel(name) {
-    if (channels[name] !== undefined) return;
+function _checkTableChannel(table) {
+    if (channels[table] !== undefined) return;
 
     // init channel
-    channels[name] = [];
-    channels[name].push({subscribers: []});
-
-    if (name === 'messages') return;
+    channels[table] = [];
+    channels[table].subscribers = [];
 
     // get records from database
-    pgClient.query("SELECT * FROM " + name + " WHERE id > 0 ORDER BY id",
+    pgClient.query("SELECT * FROM " + table + " ORDER BY id",
         function (err, result) {
             if (err) return console.error('error running query', err);
 
             for (var i = 0; i < result.rows.length; i++)
-                channels[name][result.rows[i].id] = result.rows[i];
+                channels[table][result.rows[i].id] = result.rows[i];
 
             console.log('initialized channel: "%s", %s row(s)',
-                name, channels[name].length);
+                table, channels[table].length);
         });
 }
 
-function _updateSubscribers(channel, data) {
+//FIXME: move to upper level (emit event, maybe?)
+function _updateSubscribers(n) {
     try {
-        var list = channels[table][0].subscribers;
-
-        for (var i = 0; i < list.length; i++)
-            list[i].socket.send(JSON.stringify(data));
+        // var list = channels[table].subscribers;
+        //
+        // for (var i = 0; i < list.length; i++)
+        //     list[i].socket.send(JSON.stringify(data));
 
     } catch (error) {
         console.error(error);
     }
 
+    console.log('op: "%s", table: "%s", ', n.channel, n.table, n.data);
 }
 
-function _insertRow(table, data) {
-    //console.log('insert into "%s": "id:%s"', table, data[0].id);
-    channels[table][data[0].id] = data;
-    _updateSubscribers(table, data);
-}
-
-function _deleteRow(table, data) {
-    //console.log('delete from "%s": "id:%s"', table, data[0].id);
-    delete channels[table][data[0].id];
-
-    _updateSubscribers(table, {
-        table: table,
-        op: 'DELETE',
-        data: [{id: data[0].id}]
-    });
-}
-
-function _updateRow(table, data) {
-    //TODO: update data and subscribers
-}
-
-function _customNotify(data) {
-    console.log('notify pid[%s]: "%s"', data.processId, data.text);
+function _customNotify(n) {
+    console.log('notify pid[%s]: "%s"', n.processId, n.data);
 }
 
 // notification listener
 pgClient.on('notification', function (msg) {
-    var pld = _parsePayload(msg);
+    var note = _parseNotification(msg);
+    if (note === null ) return;
 
-    switch (pld.op) {
-        case 'DELETE':
-            _deleteRow(pld.table, pld.data);
+    switch (note.channel) {
+        case 'delete':
+            delete channels[note.table][note.id];
+            _updateSubscribers(note);
             break;
 
-        case 'INSERT':
-            _insertRow(pld.table, pld.data);
+        case 'insert':
+            channels[note.table][note.id] = note.data;
+            _updateSubscribers(note);
             break;
 
-        case 'UPDATE':
-            _updateRow(pld.table, pld.data);
+        case 'update':
+            channels[note.table][note.id] = note.data;
+            _updateSubscribers(note);
             break;
 
-        case 'NOTIFY':
-            _customNotify(pld.data);
+        case 'messages':
+            _customNotify(note);
             break;
 
         default:
-            console.error('Can`t process notify:');
-            console.error(pld);
+            console.error('Can`t process note:');
+            console.error(note);
     }
-    //if (pld.table === 'variables')
-    //    console.log(channels[pld.table]);
 });
 
-// set to listen notifications on channel 'livepg'
-// by our trigger
-pgClient.query("LISTEN livepg");
+// set to listen notifications on channels:
+// 'update', 'insert' and 'delete' fired by trigger
+pgClient.query("LISTEN delete");
+pgClient.query("LISTEN insert");
+pgClient.query("LISTEN update");
+
+// set to listen notifications on 'messages' channel:
+pgClient.query("LISTEN messages");
 
 // custom send notification (and init channel "messages")
 // (other way: "SELECT pg_notify('livepg', 'test via SELECT')")
-pgClient.query("NOTIFY livepg, 'web server say: hello!'");
+pgClient.query("NOTIFY messages, 'web server say: hello!'");
 
 // close connection and cleanup on server exit
 process.on('SIGINT', function () {
+    pgClient.query("NOTIFY messages, 'web server say: goodbye!'");
+
+    pgClient.query("UNLISTEN messages");
+    pgClient.query("UNLISTEN delete");
+    pgClient.query("UNLISTEN insert");
+    pgClient.query("UNLISTEN update");
+
     pgClient.end();
     process.exit();
 });

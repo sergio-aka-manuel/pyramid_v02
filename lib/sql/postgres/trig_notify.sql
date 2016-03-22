@@ -1,0 +1,7 @@
+DROP TRIGGER notify ON config;
+
+CREATE TRIGGER notify
+  AFTER INSERT OR UPDATE OR DELETE
+  ON config
+  FOR EACH ROW
+  EXECUTE PROCEDURE notification();
