@@ -2,9 +2,7 @@
 
 -- DROP FUNCTION public.notification();
 
-CREATE OR REPLACE FUNCTION notification()
-  RETURNS trigger AS
-$BODY$
+CREATE OR REPLACE FUNCTION notification() RETURNS trigger AS $BODY$
 DECLARE
 	head	text;
 	message	text;
@@ -52,9 +50,7 @@ BEGIN
   END LOOP;
   RETURN NULL;
 
-END;
-$BODY$
-  LANGUAGE plpgsql VOLATILE
-  COST 100;
-ALTER FUNCTION notification()
-  OWNER TO manuel;
+END; $BODY$
+LANGUAGE plpgsql VOLATILE COST 100;
+
+ALTER FUNCTION notification() OWNER TO manuel;
